@@ -42,11 +42,21 @@
     if (IMAGE_ICON_RE.test(icon)) {
       const src = resolveIconSrc(icon);
       const customSize = Number(options.size);
-      const sizeStyle =
-        Number.isFinite(customSize) && customSize > 0
-          ? ` style="width:${customSize}px;height:${customSize}px;"`
-          : "";
-      return `<img src="${src}" alt="${alt}" loading="lazy"${sizeStyle} />`;
+      const customOffsetY = Number(options.offsetY);
+      const customPosition =
+        typeof options.position === "string" && options.position.trim()
+          ? options.position.trim()
+          : "center center";
+      const styles = [];
+      if (Number.isFinite(customSize) && customSize > 0) {
+        styles.push(`width:${customSize}px;`, `height:${customSize}px;`);
+      }
+      styles.push(`object-position:${customPosition};`);
+      if (Number.isFinite(customOffsetY) && customOffsetY !== 0) {
+        styles.push(`transform:translateY(${customOffsetY}px);`);
+      }
+      const inlineStyle = styles.length ? ` style="${styles.join("")}"` : "";
+      return `<img src="${src}" alt="${alt}" loading="lazy"${inlineStyle} />`;
     }
     return `<span>${icon}</span>`;
   }
@@ -156,7 +166,11 @@
       return `
         <article class="product-card">
           <div class="product-image">
-            ${renderIcon(p.icon, p.name, { size: p.iconSize })}
+            ${renderIcon(p.icon, p.name, {
+              size: p.iconSize,
+              position: p.iconPosition,
+              offsetY: p.iconOffsetY,
+            })}
           </div>
           <div class="product-body">
             <h3 class="product-name">${p.name}</h3>

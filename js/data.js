@@ -59,8 +59,8 @@ const PRODUCTS = [
   { id: 302, cat: "bia",      name: "Bia hơi Hà Nội can 5L",       price: 175000, icon:  "images/Bia/keg-30-lit-2155.png", iconSize: 230, desc: "Bia hơi Hà Nội mát lạnh" },
   { id: 303, cat: "bia",      name: "Bia hơi Hà Nội can 10L",         price: 350000, icon:  "images/Bia/keg-30-lit-2155.png", iconSize: 230,  desc: "Bia hơi Hà Nội mát lạnh" },
   { id: 304, cat: "bia",      name: "Bia hơi Hà Nội can 20L",          price: 700000, icon:  "images/Bia/keg-30-lit-2155.png", iconSize: 230, desc: "Bia hơi Hà Nội mát lạnh" },
-  { id: 305, cat: "bia",      name: "Lạc Luộc",             price: 20000, icon: "images/Bia/dau-phong-luoc-1.jpg", iconSize: 270, desc: "Lạc luộc béo ngậy" },
-    { id: 306, cat: "bia",      name: "Lạc rang muối",           price: 20000, icon: "images/Bia/lac-rang-muoi.jpg", iconSize: 230, desc: "Đĩa lạc rang giòn rụm" },
+  { id: 305, cat: "bia",      name: "Lạc Luộc",             price: 20000, icon: "images/Bia/dau-phong-luoc-1.jpg", iconSize: 290, iconOffsetY: -20, desc: "Lạc luộc béo ngậy" },
+    { id: 306, cat: "bia",      name: "Lạc rang muối",           price: 20000, icon: "images/Bia/lac-rang-muoi.jpg", iconSize: 230,  iconOffsetY: -20,desc: "Đĩa lạc rang giòn rụm" },
   { id: 307, cat: "bia",      name: "Nem chua ",            price: 45000, icon: "images/Bia/nem-chua-chuan-thanh-hoa.jpg", iconSize: 260, desc: "10 chiếc, ăn kèm tương ớt" },
   { id: 308, cat: "bia",      name: "Nem bốc",           price: 35000, icon: "images/Bia/nem-boc.jpg", iconSize: 230, desc: "Chân gà nướng sa tế cay" },
   { id: 309, cat: "bia",      name: "Đậu phụ tẩm hành",        price: 25000, icon: "images/Bia/dau-phu-tam-hanh.jpg", iconSize: 230, desc: "Đậu rán vàng, hành lá phi thơm" },
@@ -68,14 +68,14 @@ const PRODUCTS = [
   
 
   // ====== NƯỚC GIẢI KHÁT ======
-  { id: 401, cat: "nuoc",     name: "Coca-Cola",         price: 12000, icon: "images/Nuoc/cocacola.png", iconSize: 230, desc: "Lon nước ngọt có ga" },
-  { id: 402, cat: "nuoc",     name: "GoodMood",             price: 12000, icon: "images/Nuoc/goodmood.png", iconSize: 230, desc: "Lon nước ngọt có ga" },
-  { id: 403, cat: "nuoc",     name: "Rock Star",          price: 12000, icon: "images/Nuoc/rockstar update.png", iconSize: 230, desc: "Nước tăng lực" },
-  { id: 404, cat: "nuoc",     name: "Trà xanh Không Độ",       price: 10000, icon: "images/Nuoc/traxanhkhongdo.png", iconSize: 230, desc: "Chai 455ml" },
-  { id: 405, cat: "nuoc",     name: "Nước suối Lavie 500ml",   price: 8000,  icon: "images/Nuoc/lavie.png", iconSize: 230, desc: "Nước tinh khiết" },
-  { id: 406, cat: "nuoc",     name: "Number 1",                price: 12000, icon: "images/Nuoc/number1.png", iconSize: 230, desc: "Lon tăng lực" },
-  { id: 407, cat: "nuoc",     name: "Sprite",            price: 12000, icon: "images/Nuoc/sprite.png", iconSize: 230, desc: "Lon nước chanh có ga" },
-  { id: 408, cat: "nuoc",     name: "Red Bull (Bò Húc)",       price: 15000, icon: "images/Nuoc/redbull.png", iconSize: 230, desc: "Tăng lực, lon 250ml" },
+  { id: 401, cat: "nuoc",     name: "Coca-Cola",         price: 12000, icon: "images/Nước ngọt/coca.webp", iconSize: 230, desc: "Lon nước ngọt có ga" },
+  { id: 402, cat: "nuoc",     name: "GoodMood",             price: 12000, icon: "images/Nước ngọt/goodmood.png", iconSize: 220, desc: "Lon nước ngọt có ga" },
+  { id: 403, cat: "nuoc",     name: "Rock Star",          price: 12000, icon: "images/Nước ngọt/rockstar update.png", iconSize: 300, iconPosition: "center center", iconOffsetY: -100, desc: "Nước tăng lực" },
+  { id: 404, cat: "nuoc",     name: "Trà xanh Không Độ",       price: 10000, icon: "images/Nước ngọt/traxanhkhongdo.png", iconSize: 230, desc: "Chai 455ml" },
+  { id: 405, cat: "nuoc",     name: "Nước suối Lavie 500ml",   price: 8000,  icon: "images/Nước ngọt/lavie.png", iconSize: 230, desc: "Nước tinh khiết" },
+  { id: 406, cat: "nuoc",     name: "Number 1",                price: 12000, icon: "images/Nước ngọt/number1.png", iconSize: 230, desc: "Lon tăng lực" },
+  { id: 407, cat: "nuoc",     name: "Sprite",            price: 12000, icon: "images/Nước ngọt/sprite.png", iconSize: 230, desc: "Lon nước chanh có ga" },
+  { id: 408, cat: "nuoc",     name: "Red Bull (Bò Húc)",       price: 15000, icon: "images/Nước ngọt/redbull.png", iconSize: 230, desc: "Tăng lực, lon 250ml" },
 
   // ====== BÁNH KẸO & TẠP HOÁ ======
   { id: 501, cat: "banh-keo", name: "Mì tôm Hảo Hảo (gói)",    price: 5000,  icon: "🍜", desc: "Tôm chua cay" },

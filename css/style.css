@@ -528,6 +528,8 @@ input, textarea { font-family: inherit; font-size: inherit; }
 .product-image img {
   width: clamp(64px, 45%, 65px);
   height: clamp(64px, 45%, 65px);
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   object-position: center;
   position: relative;
