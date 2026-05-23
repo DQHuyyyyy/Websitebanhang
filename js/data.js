@@ -39,7 +39,7 @@ const CATEGORIES = [
 const PRODUCTS = [
   // ====== CƠM BÌNH DÂN ======
   { id: 101, cat: "com",      name: "Cơm Set1",          price: 35000, icon: "images/Cơm/set1.jpg", iconSize: 230, desc: "Thịt kho tàu, cá kho, chả lá lốt, rau xào" },
-  { id: 102, cat: "com",      name: "Cơm Set2",          price: 35000, icon: "images/Cơm/set2.jpg", iconSize: 230, desc: "Gà xào sả ớt, trứng chiên, canh bí đỏ" },
+  { id: 102, cat: "com",      name: "Cơm Set2",          price: 35000, icon: "images/Cơm/set2.jpg", iconSize: 230, desc: "Gà xào sả ớt, thịt kho tàu, sườn chua ngọt" },
   { id: 103, cat: "com",      name: "Cơm Set3",          price: 35000, icon: "images/Cơm/set3.jpg", iconSize: 230, desc: "Tôm riêu cua, cơm trắng, rau xào" },
   { id: 104, cat: "com",      name: "Cơm Set4",          price: 35000, icon: "images/Cơm/set4.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
   { id: 104, cat: "com",      name: "Cơm Set5",          price: 35000, icon: "images/Cơm/set5.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
