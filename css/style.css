@@ -1227,6 +1227,18 @@ input, textarea { font-family: inherit; font-size: inherit; }
   .menu-section, .about, .contact { padding: 60px 0; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-image { font-size: 56px; }
+  /* Mobile: ép ảnh co vừa khung, không bị cắt do iconSize cố định lớn hơn ô ảnh */
+  .product-image img {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 8px;
+    object-fit: contain;
+    transform: none !important;
+  }
   .product-body { padding: 12px; }
   .product-name { font-size: 14px; }
   .product-desc {
