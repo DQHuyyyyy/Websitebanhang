@@ -10,6 +10,11 @@
   let activeCategory = "all";
   let searchQuery = "";
   let pinnedLocation = null;
+  // Lựa chọn đang ghép cho "Cơm tự chọn": mảng id món theo từng nhóm
+  let comSelection = { chinh: [], rau: [], canh: [] };
+  // Danh sách món trong ngày: mặc định lấy mẫu trong data.js,
+  // sẽ được thay bằng dữ liệu Google Sheet nếu có cấu hình COM_SHEET_CSV_URL.
+  let dishes = (typeof DAILY_DISHES !== "undefined" ? DAILY_DISHES.slice() : []);
 
   // -------- HELPERS --------
   const $  = (sel, parent = document) => parent.querySelector(sel);
@@ -61,6 +66,22 @@
     return `<span>${icon}</span>`;
   }
 
+  // Trả về thông tin hiển thị của 1 dòng giỏ hàng.
+  // - Set cơm tự chọn (item.custom): dùng dữ liệu lưu sẵn trong item.
+  // - Sản phẩm thường: tra trong PRODUCTS theo id.
+  function cartItemInfo(item) {
+    if (item && item.custom) {
+      return {
+        name: item.name,
+        price: item.price,
+        icon: item.icon || "🍱",
+        desc: (item.lines || []).join(", "),
+      };
+    }
+    const p = PRODUCTS.find(pp => pp.id === item.id);
+    return p ? { name: p.name, price: p.price, icon: p.icon, desc: p.desc } : null;
+  }
+
   function saveCart() {
     try {
       localStorage.setItem("thuydiep_cart", JSON.stringify(cart));
@@ -69,7 +90,11 @@
   function loadCart() {
     try {
       const raw = localStorage.getItem("thuydiep_cart");
-      return raw ? JSON.parse(raw) : [];
+      const saved = raw ? JSON.parse(raw) : [];
+      // Bỏ các món không còn hợp lệ (vd set cơm cố định cũ đã gỡ)
+      return Array.isArray(saved)
+        ? saved.filter(item => item && (item.custom || PRODUCTS.some(p => p.id === item.id)))
+        : [];
     } catch { return []; }
   }
 
@@ -144,6 +169,32 @@
   function renderProducts() {
     const grid = $("#productGrid");
     const empty = $("#emptyState");
+    const builder = $("#comBuilder");
+    const searchBar = $(".search-bar");
+
+    const q = searchQuery.trim();
+    const isCom = activeCategory === "com";
+    // Hiện bộ "Cơm tự chọn": ở danh mục Cơm, HOẶC ở "Tất cả" (khi không tìm kiếm) -> đặt lên đầu
+    const showBuilder = isCom || (activeCategory === "all" && !q);
+
+    if (builder) {
+      builder.hidden = !showBuilder;
+      // Khi nhúng trong "Tất cả": dùng kiểu gọn (thanh thêm set không dính đáy)
+      builder.classList.toggle("com-builder--embedded", showBuilder && !isCom);
+      if (showBuilder) renderComBuilder();
+    }
+
+    // Danh mục "Cơm bình dân" -> chỉ hiện bộ chọn, ẩn lưới sản phẩm + ô tìm kiếm
+    if (isCom) {
+      grid.style.display = "none";
+      grid.innerHTML = "";
+      empty.hidden = true;
+      if (searchBar) searchBar.style.display = "none";
+      return;
+    }
+    grid.style.display = "";
+    if (searchBar) searchBar.style.display = "";
+
     const items = getFilteredProducts();
 
     if (items.length === 0) {
@@ -199,6 +250,225 @@
     });
   }
 
+  // -------- CƠM TỰ CHỌN (build-your-own set) --------
+  function comGroups() {
+    const rule = COM_SET.rule;
+    return [
+      { key: "chinh", label: "Món chính", icon: "🍖", need: rule.chinh },
+      { key: "rau",   label: "Món rau",   icon: "🥬", need: rule.rau },
+      { key: "canh",  label: "Món canh",  icon: "🍲", need: rule.canh },
+    ];
+  }
+
+  function isComComplete() {
+    return comGroups().every(g => comSelection[g.key].length === g.need);
+  }
+
+  function renderComBuilder() {
+    const wrap = $("#comBuilder");
+    if (!wrap) return;
+    const groups = comGroups();
+    const available = dishes.filter(d => d.available !== false);
+
+    const groupsHtml = groups.map(g => {
+      const dishes = available.filter(d => d.group === g.key);
+      const chosen = comSelection[g.key];
+      const cards = dishes.length
+        ? dishes.map(d => {
+            const sel = chosen.includes(d.id);
+            return `
+              <button class="dish-card ${sel ? "selected" : ""}"
+                      data-dish="${d.id}" data-group="${g.key}"
+                      aria-pressed="${sel}">
+                <span class="dish-img">${renderIcon(d.img, d.name)}</span>
+                <span class="dish-name">${d.name}</span>
+                <span class="dish-check">✓</span>
+              </button>`;
+          }).join("")
+        : `<p class="dish-empty">Hôm nay tạm hết món nhóm này 😴</p>`;
+
+      const done = chosen.length === g.need;
+      return `
+        <div class="dish-group">
+          <div class="dish-group-head">
+            <h4>${g.icon} ${g.label}</h4>
+            <span class="dish-count ${done ? "done" : ""}">${chosen.length}/${g.need}</span>
+          </div>
+          <div class="dish-list">${cards}</div>
+        </div>`;
+    }).join("");
+
+    const complete = isComComplete();
+    const progress = groups
+      .map(g => `${g.label}: ${comSelection[g.key].length}/${g.need}`)
+      .join("  ·  ");
+
+    wrap.innerHTML = `
+      <div class="com-head">
+        <h3>🍱 Cơm tự chọn — ${formatVND(COM_SET.price)}/set</h3>
+        <p>Cơm trắng + ${COM_SET.rule.chinh} món chính + ${COM_SET.rule.rau} rau + ${COM_SET.rule.canh} canh.
+           Chọn món tươi hôm nay theo ý bạn nhé!</p>
+      </div>
+      ${groupsHtml}
+      <div class="com-bar">
+        <div class="com-bar-info">
+          <span class="com-bar-progress">${progress}</span>
+          <span class="com-bar-price">${formatVND(COM_SET.price)}</span>
+        </div>
+        <button class="btn btn-primary" id="addComSet" ${complete ? "" : "disabled"}>
+          ${complete ? "➕ Thêm set vào giỏ" : "Chọn đủ món để thêm"}
+        </button>
+      </div>`;
+
+    $$(".dish-card", wrap).forEach(btn => {
+      btn.addEventListener("click", () => toggleDish(btn.dataset.group, btn.dataset.dish));
+    });
+    const addBtn = $("#addComSet", wrap);
+    if (addBtn) addBtn.addEventListener("click", addComSetToCart);
+  }
+
+  function toggleDish(group, dishId) {
+    const need = COM_SET.rule[group];
+    const arr = comSelection[group];
+    const idx = arr.indexOf(dishId);
+    if (idx >= 0) {
+      arr.splice(idx, 1);              // bỏ chọn
+    } else if (need === 1) {
+      comSelection[group] = [dishId];  // nhóm chỉ 1 món -> thay thế
+    } else if (arr.length < need) {
+      arr.push(dishId);                // còn chỗ -> thêm
+    } else {
+      toast(`Chỉ chọn ${need} món ở nhóm này. Bỏ bớt 1 món để đổi nhé!`, "error");
+      return;
+    }
+    renderComBuilder();
+  }
+
+  function addComSetToCart() {
+    if (!isComComplete()) return;
+    const nameOf = id => {
+      const d = dishes.find(x => x.id === id);
+      return d ? d.name : "";
+    };
+    const lines = [
+      ...comSelection.chinh.map(nameOf),
+      ...comSelection.rau.map(nameOf),
+      ...comSelection.canh.map(nameOf),
+    ].filter(Boolean);
+
+    cart.push({
+      id: "comset_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      custom: true,
+      qty: 1,
+      name: "Set cơm tự chọn",
+      price: COM_SET.price,
+      icon: "🍱",
+      lines,
+    });
+    saveCart();
+    comSelection = { chinh: [], rau: [], canh: [] }; // reset cho lần chọn tiếp theo
+    renderComBuilder();
+    renderCart();
+    bumpCartCount();
+    toast("✓ Đã thêm set cơm vào giỏ");
+  }
+
+  // -------- ĐỌC THỰC ĐƠN TỪ GOOGLE SHEET --------
+  // Bỏ dấu tiếng Việt + đưa về chữ thường để so khớp tên cột/giá trị linh hoạt
+  function normVN(s) {
+    return String(s == null ? "" : s)
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d").replace(/Đ/g, "D")
+      .trim().toLowerCase();
+  }
+
+  // Tách CSV chuẩn (hỗ trợ ô có dấu phẩy/xuống dòng trong ngoặc kép)
+  function parseCSV(text) {
+    text = String(text).replace(/^\uFEFF/, ""); // bỏ BOM
+    const rows = [];
+    let row = [], field = "", inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else field += ch;
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ",") {
+        row.push(field); field = "";
+      } else if (ch === "\n") {
+        row.push(field); rows.push(row); row = []; field = "";
+      } else if (ch !== "\r") {
+        field += ch;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  // Chuyển các dòng CSV thành danh sách món
+  function rowsToDishes(rows) {
+    if (!rows || rows.length < 2) return [];
+    const header = rows[0].map(normVN);
+    const findCol = (...keys) => header.findIndex(h => keys.some(k => h.includes(k)));
+    const ci = {
+      group: findCol("nhom"),
+      name:  findCol("ten", "mon"),
+      img:   findCol("anh", "hinh", "img"),
+      avail: findCol("hom nay", "con", "available", "co"),
+    };
+    const groupOf = v => {
+      const n = normVN(v);
+      if (n.includes("chinh")) return "chinh";
+      if (n.includes("rau"))   return "rau";
+      if (n.includes("canh"))  return "canh";
+      return n;
+    };
+    const isGroup = g => g === "chinh" || g === "rau" || g === "canh";
+    const NEGATIVE = ["", "0", "khong", "het", "no", "false", "off"];
+    const out = [];
+    let lastGroup = ""; // nhớ nhóm của tiêu đề mục gần nhất
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      // Nếu ô "Nhóm" có giá trị (tiêu đề mục) -> cập nhật nhóm hiện tại;
+      // các dòng để trống ô Nhóm sẽ kế thừa nhóm này.
+      const mapped = groupOf(ci.group >= 0 ? (r[ci.group] || "") : "");
+      if (isGroup(mapped)) lastGroup = mapped;
+      const name = ((ci.name >= 0 ? r[ci.name] : "") || "").trim();
+      if (!name) continue; // bỏ dòng trống
+      const img = (((ci.img >= 0 ? r[ci.img] : "") || "").trim()) || "🍽️";
+      const availRaw = ci.avail >= 0 ? normVN(r[ci.avail]) : "x";
+      out.push({
+        id: "sheet_" + i,
+        group: lastGroup,
+        name,
+        img,
+        available: !NEGATIVE.includes(availRaw),
+      });
+    }
+    return out;
+  }
+
+  async function loadDishesFromSheet() {
+    const url = (typeof COM_SHEET_CSV_URL !== "undefined" && COM_SHEET_CSV_URL ? COM_SHEET_CSV_URL : "").trim();
+    if (!url) return; // chưa cấu hình -> giữ danh sách mẫu
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const parsed = rowsToDishes(parseCSV(await res.text()));
+      if (parsed.length) {
+        dishes = parsed;
+        comSelection = { chinh: [], rau: [], canh: [] };
+        // Vẽ lại giao diện đang xem để cập nhật cả tab "Tất cả" lẫn "Cơm bình dân"
+        renderProducts();
+      }
+    } catch (e) {
+      console.warn("Không tải được thực đơn từ Google Sheet — dùng danh sách mẫu.", e);
+    }
+  }
+
   // -------- CART OPERATIONS --------
   function addToCart(id) {
     const product = PRODUCTS.find(p => p.id === id);
@@ -214,11 +484,11 @@
   }
 
   function changeQty(id, delta) {
-    const item = cart.find(c => c.id === id);
+    const item = cart.find(c => String(c.id) === String(id));
     if (!item) return;
     item.qty += delta;
     if (item.qty <= 0) {
-      cart = cart.filter(c => c.id !== id);
+      cart = cart.filter(c => String(c.id) !== String(id));
     }
     saveCart();
     renderProducts();
@@ -226,7 +496,7 @@
   }
 
   function removeFromCart(id) {
-    cart = cart.filter(c => c.id !== id);
+    cart = cart.filter(c => String(c.id) !== String(id));
     saveCart();
     renderProducts();
     renderCart();
@@ -241,8 +511,8 @@
 
   function getCartTotal() {
     return cart.reduce((sum, item) => {
-      const p = PRODUCTS.find(pp => pp.id === item.id);
-      return sum + (p ? p.price * item.qty : 0);
+      const info = cartItemInfo(item);
+      return sum + (info ? info.price * item.qty : 0);
     }, 0);
   }
   function getCartCount() {
@@ -277,31 +547,35 @@
     foot.classList.remove("hide");
 
     body.innerHTML = cart.map(item => {
-      const p = PRODUCTS.find(pp => pp.id === item.id);
-      if (!p) return "";
+      const info = cartItemInfo(item);
+      if (!info) return "";
+      const sub = item.custom && info.desc
+        ? `<span class="cart-item-sub">${info.desc}</span>`
+        : "";
       return `
         <div class="cart-item">
-          <div class="cart-item-img">${renderIcon(p.icon, p.name)}</div>
+          <div class="cart-item-img">${renderIcon(info.icon, info.name)}</div>
           <div>
-            <p class="cart-item-name">${p.name}</p>
-            <span class="cart-item-price">${formatVND(p.price * item.qty)}</span>
+            <p class="cart-item-name">${info.name}</p>
+            ${sub}
+            <span class="cart-item-price">${formatVND(info.price * item.qty)}</span>
           </div>
           <div class="cart-item-controls">
-            <div class="qty-control" data-id="${p.id}">
+            <div class="qty-control" data-id="${item.id}">
               <button class="qty-btn" data-action="dec">−</button>
               <span class="qty-num">${item.qty}</span>
               <button class="qty-btn" data-action="inc">+</button>
             </div>
-            <button class="cart-item-remove" data-remove="${p.id}">Xoá</button>
+            <button class="cart-item-remove" data-remove="${item.id}">Xoá</button>
           </div>
         </div>
       `;
     }).join("");
 
-    // bind controls
+    // bind controls (id giữ dạng chuỗi để hỗ trợ cả set cơm tự chọn)
     $$(".cart-item", body).forEach(row => {
       const ctrl = $(".qty-control", row);
-      const id = Number(ctrl.dataset.id);
+      const id = ctrl.dataset.id;
       $(".qty-btn[data-action='inc']", ctrl).addEventListener("click", () => changeQty(id, +1));
       $(".qty-btn[data-action='dec']", ctrl).addEventListener("click", () => changeQty(id, -1));
       $("[data-remove]", row).addEventListener("click", () => removeFromCart(id));
@@ -442,12 +716,15 @@
 
   function renderOrderSummary() {
     const items = cart.map(item => {
-      const p = PRODUCTS.find(pp => pp.id === item.id);
-      if (!p) return "";
+      const info = cartItemInfo(item);
+      if (!info) return "";
+      const sub = item.custom && info.desc
+        ? `<div class="summary-sub">${info.desc}</div>`
+        : "";
       return `
         <div class="summary-row">
-          <span>${p.name} × ${item.qty}</span>
-          <span>${formatVND(p.price * item.qty)}</span>
+          <span>${info.name} × ${item.qty}${sub}</span>
+          <span>${formatVND(info.price * item.qty)}</span>
         </div>
       `;
     }).join("");
@@ -474,9 +751,10 @@
     lines.push("━━━━━━━━━━━━━━━━━━━━");
     lines.push("🍽️ MÓN ĐÃ ĐẶT:");
     cart.forEach((item, i) => {
-      const p = PRODUCTS.find(pp => pp.id === item.id);
-      if (!p) return;
-      lines.push(`${i+1}. ${p.name} × ${item.qty} = ${formatVND(p.price * item.qty)}`);
+      const info = cartItemInfo(item);
+      if (!info) return;
+      lines.push(`${i+1}. ${info.name} × ${item.qty} = ${formatVND(info.price * item.qty)}`);
+      if (item.custom && info.desc) lines.push(`   • Gồm: ${info.desc}`);
     });
     lines.push("━━━━━━━━━━━━━━━━━━━━");
     const subtotal = getCartTotal();
@@ -697,6 +975,7 @@
     bindEvents();
     bindHeaderScroll();
     bindMobileMenu();
+    loadDishesFromSheet(); // tải thực đơn ngày từ Google Sheet (nếu có cấu hình)
   }
 
   if (document.readyState === "loading") {

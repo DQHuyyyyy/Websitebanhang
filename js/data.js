@@ -38,17 +38,9 @@ const CATEGORIES = [
 
 const PRODUCTS = [
   // ====== CƠM BÌNH DÂN ======
-  { id: 101, cat: "com",      name: "Cơm Set1",          price: 35000, icon: "images/Cơm/set1.jpg", iconSize: 230, desc: "Thịt kho tàu, cá kho, chả lá lốt, rau xào" },
-  { id: 102, cat: "com",      name: "Cơm Set2",          price: 35000, icon: "images/Cơm/set2.jpg", iconSize: 230, desc: "Gà xào sả ớt, thịt kho tàu, sườn chua ngọt" },
-  { id: 103, cat: "com",      name: "Cơm Set3",          price: 35000, icon: "images/Cơm/set3.jpg", iconSize: 230, desc: "Tôm riêu cua, cơm trắng, rau xào" },
-  { id: 104, cat: "com",      name: "Cơm Set4",          price: 35000, icon: "images/Cơm/set4.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set5",          price: 35000, icon: "images/Cơm/set5.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set6",          price: 35000, icon: "images/Cơm/set6.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set7",          price: 35000, icon: "images/Cơm/set7.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set8",          price: 35000, icon: "images/Cơm/set8.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set9",          price: 35000, icon: "images/Cơm/set9.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set10",          price: 35000, icon: "images/Cơm/set10.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
-  { id: 104, cat: "com",      name: "Cơm Set11",          price: 35000, icon: "images/Cơm/set11.jpg", iconSize: 230, desc: "Cà ri gà, cơm trắng, dưa leo" },
+  // Mục "Cơm bình dân" giờ dùng cơ chế "Cơm tự chọn":
+  // khách tự ghép món trong ngày thành set 35k.
+  // => Cấu hình ở COM_SET + DAILY_DISHES tại CUỐI FILE này, không khai báo set cố định ở đây nữa.
 
   // ====== PHỞ & BÚN ======
   { id: 201, cat: "pho-bun",  name: "Phở bò",              price: 35000, icon: "images/Bun/phở bò.webp", iconSize: 230, desc: "Nước dùng đậm đà, bò tái mềm" },
@@ -94,4 +86,46 @@ const PRODUCTS = [
   { id: 512, cat: "banh-keo", name: "Sữa tươi TH true MILK 220ml", price: 9000, icon: "images/LinhTinh/TH true milk.jpg", iconSize: 230, desc: "Sữa tươi tiệt trùng" },
   { id: 513, cat: "banh-keo", name: "Bánh Custas (2 cái)",     price: 10000, icon: "images/LinhTinh/custas2cai.jpeg", iconSize: 230, desc: "Bánh bông lan trứng" },
   { id: 514, cat: "banh-keo", name: "Bánh xốp Nabati",         price: 12000, icon: "images/LinhTinh/nabati.jpeg", iconSize: 230, desc: "Bánh xốp phô mai" },
+];
+
+/* ============================================================
+   CƠM TỰ CHỌN (SET 35K) — CƠ CHẾ LINH HOẠT THEO NGÀY
+   ============================================================
+   COM_SET   : Giá + công thức 1 set (mấy món chính/rau/canh).
+   DAILY_DISHES : Danh sách MÓN trong ngày. Mỗi ngày bếp chỉ cần
+                  đổi "available" (có/hết) — sau này lấy từ Google Sheet.
+   - group : "chinh" | "rau" | "canh"
+   - img   : đường dẫn ảnh (vd "images/Mon/thit-kho.jpg") HOẶC 1 emoji.
+             (Hiện đang dùng emoji mẫu; thay bằng ảnh thật sau.)
+   - available : true = còn món hôm nay, false = tạm hết.
+   ============================================================ */
+const COM_SET = {
+  price: 35000,
+  // 1 set = cơm trắng + 3 món chính + 1 rau + 1 canh
+  rule: { chinh: 3, rau: 1, canh: 1 },
+};
+
+/* ⚙️ GOOGLE SHEET — để bếp cập nhật món mỗi ngày (xem HUONG_DAN_THUC_DON.md)
+   - Để TRỐNG "" => web dùng danh sách mẫu DAILY_DISHES bên dưới.
+   - Dán link CSV "Publish to web" của Google Sheet vào đây để bật chế độ tự cập nhật. */
+const COM_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1wuvrrNztXRwmped8QXcV9xNyL3OYfUJwOs5aHHATZQo/export?format=csv&gid=0";
+
+const DAILY_DISHES = [
+  // ----- MÓN CHÍNH -----
+  { id: "c01", group: "chinh", name: "Thịt kho tàu",        img: "🍖", available: true },
+  { id: "c02", group: "chinh", name: "Cá kho tộ",           img: "🐟", available: true },
+  { id: "c03", group: "chinh", name: "Trứng chiên",         img: "🍳", available: true },
+  { id: "c04", group: "chinh", name: "Gà rang gừng",        img: "🍗", available: true },
+  { id: "c05", group: "chinh", name: "Đậu sốt cà chua",     img: "🍅", available: true },
+  { id: "c06", group: "chinh", name: "Thịt rang cháy cạnh", img: "🥓", available: true },
+  { id: "c07", group: "chinh", name: "Tôm rim",             img: "🦐", available: true },
+  { id: "c08", group: "chinh", name: "Chả lá lốt",          img: "🌿", available: false }, // ví dụ món tạm hết
+  // ----- MÓN RAU -----
+  { id: "r01", group: "rau",   name: "Rau muống xào tỏi",   img: "🥬", available: true },
+  { id: "r02", group: "rau",   name: "Su su luộc",          img: "🥒", available: true },
+  { id: "r03", group: "rau",   name: "Bắp cải luộc",        img: "🥗", available: true },
+  // ----- MÓN CANH -----
+  { id: "s01", group: "canh",  name: "Canh chua",           img: "🍲", available: true },
+  { id: "s02", group: "canh",  name: "Canh rau ngót",       img: "🥣", available: true },
+  { id: "s03", group: "canh",  name: "Canh bí đỏ",          img: "🎃", available: true },
 ];

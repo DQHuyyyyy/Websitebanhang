@@ -1200,6 +1200,147 @@ input, textarea { font-family: inherit; font-size: inherit; }
 }
 
 /* ============================================================
+   CƠM TỰ CHỌN (build-your-own set)
+   ============================================================ */
+.com-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 90px; /* chừa chỗ cho thanh bar cố định */
+}
+/* Khi nhúng trong mục "Tất cả": gọn lại, ngăn cách với danh sách sản phẩm bên dưới */
+.com-builder--embedded {
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 2px dashed var(--border-soft);
+}
+.com-builder--embedded .com-bar {
+  position: static;
+  box-shadow: var(--shadow-md);
+}
+.com-head {
+  background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+.com-head h3 { margin: 0 0 4px; font-size: 19px; color: var(--text); }
+.com-head p  { margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+.dish-group { display: flex; flex-direction: column; gap: 12px; }
+.dish-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dish-group-head h4 { margin: 0; font-size: 16px; color: var(--text); }
+.dish-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--border-soft);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.dish-count.done { color: #fff; background: var(--primary); }
+
+.dish-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.dish-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #fff;
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+.dish-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.dish-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, .18);
+}
+.dish-img {
+  font-size: 40px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+}
+.dish-img img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.dish-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.dish-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(.5);
+  transition: var(--transition);
+}
+.dish-card.selected .dish-check { opacity: 1; transform: scale(1); }
+.dish-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--border-soft);
+  border-radius: var(--radius-md);
+}
+
+.com-bar {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.com-bar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.com-bar-progress { font-size: 13px; color: var(--text-muted); }
+.com-bar-price { font-size: 18px; font-weight: 800; color: var(--primary); }
+.com-bar .btn { white-space: nowrap; }
+.com-bar .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+
+.cart-item-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 2px 0 4px;
+  line-height: 1.4;
+}
+.summary-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 960px) {
@@ -1252,6 +1393,14 @@ input, textarea { font-family: inherit; font-size: inherit; }
   }
   .product-price { font-size: 15px; }
   .add-btn { width: 34px; height: 34px; font-size: 20px; }
+  /* Cơm tự chọn trên mobile */
+  .dish-list { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dish-card { padding: 10px 6px; }
+  .dish-img { font-size: 32px; width: 46px; height: 46px; }
+  .dish-img img { width: 46px; height: 46px; }
+  .dish-name { font-size: 12px; }
+  .com-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .com-bar .btn { width: 100%; }
   .contact-grid { grid-template-columns: 1fr; }
   .footer-inner { grid-template-columns: 1fr; gap: 30px; }
   .cart-drawer { width: 100%; }
