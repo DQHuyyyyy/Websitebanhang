@@ -306,7 +306,7 @@
           <button type="button" class="btn btn-outline location-btn" id="pinLocationBtn">
             📍 Ghim vị trí hiện tại
           </button>
-          <p class="location-hint" id="locationHint">Bấm để lấy vị trí hiện tại và chèn vào phần địa chỉ giao hàng.</p>
+          <p class="location-hint" id="locationHint">Bấm để ghim vị trí hiện tại — toạ độ gửi kèm đơn, không ghi đè ô địa chỉ.</p>
         </div>
         <div class="form-group">
           <label for="custAddress">Địa chỉ giao hàng <span class="req">*</span></label>
@@ -315,6 +315,32 @@
         <div class="form-group">
           <label for="custNote">Ghi chú (tuỳ chọn)</label>
           <textarea id="custNote" rows="2" placeholder="VD: Ít cay, không hành, giao trước 12h..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Hình thức thanh toán <span class="req">*</span></label>
+          <div class="pay-methods">
+            <label class="pay-method">
+              <input type="radio" name="payMethod" value="cod" checked />
+              <span class="pay-method-body">
+                <span class="pay-method-icon">💵</span>
+                <span class="pay-method-text">
+                  <strong>Tiền mặt khi nhận hàng</strong>
+                  <small>Trả tiền cho shipper khi nhận</small>
+                </span>
+              </span>
+            </label>
+            <label class="pay-method">
+              <input type="radio" name="payMethod" value="transfer" />
+              <span class="pay-method-body">
+                <span class="pay-method-icon">🏦</span>
+                <span class="pay-method-text">
+                  <strong>Chuyển khoản ngân hàng</strong>
+                  <small>Quét mã QR, tự điền sẵn số tiền</small>
+                </span>
+              </span>
+            </label>
+          </div>
         </div>
 
         <div class="order-summary">
@@ -341,6 +367,25 @@
         <button class="icon-btn" id="closeSuccess" aria-label="Đóng">×</button>
       </header>
       <div class="modal-body">
+        <!-- Khối chuyển khoản (chỉ hiện khi khách chọn "Chuyển khoản ngân hàng") -->
+        <div class="transfer-box" id="transferBox" hidden>
+          <h4>🏦 Quét mã QR để chuyển khoản</h4>
+          <div class="transfer-qr">
+            <img id="transferQr" src="" alt="Mã QR chuyển khoản" />
+          </div>
+          <div class="transfer-info">
+            <div class="transfer-row"><span>Ngân hàng</span><b id="bankNameOut"></b></div>
+            <div class="transfer-row"><span>Số tài khoản</span><b id="bankAccountOut"></b></div>
+            <div class="transfer-row"><span>Chủ tài khoản</span><b id="bankHolderOut"></b></div>
+            <div class="transfer-row"><span>Số tiền</span><b id="bankAmountOut"></b></div>
+            <div class="transfer-row"><span>Nội dung CK</span><b id="bankContentOut"></b></div>
+          </div>
+          <button type="button" class="btn btn-outline btn-block" id="copyBankBtn">
+            📋 Sao chép thông tin chuyển khoản
+          </button>
+          <p class="transfer-note">Chuyển khoản xong, bấm <strong>"Mở Zalo"</strong> gửi đơn để shop xác nhận nhé!</p>
+        </div>
+
         <div class="steps">
           <div class="step">
             <span class="step-num">1</span>

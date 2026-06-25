@@ -674,13 +674,8 @@
         const lng = Number(pos.coords.longitude).toFixed(6);
         const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
         pinnedLocation = { lat, lng, mapsLink };
-        const pinText = `Ghim vị trí: ${lat}, ${lng} (${mapsLink})`;
-        const current = addressInput.value
-          .replace(/\n?Ghim vị trí:.*$/gm, "")
-          .trim();
-        addressInput.value = current ? `${current}\n${pinText}` : pinText;
-        setLocationHint("Đã ghim vị trí thành công.", "success");
-        addressInput.focus();
+        // Chỉ lưu vị trí ghim (gửi kèm đơn), KHÔNG ghi đè ô địa chỉ của khách
+        setLocationHint(`Đã ghim vị trí: ${lat}, ${lng}. Toạ độ sẽ gửi kèm đơn hàng.`, "success");
         toast("✓ Đã ghim vị trí hiện tại");
         setPinButtonLoading(false);
       },
@@ -762,6 +757,11 @@
     lines.push(`💵 Tạm tính: ${formatVND(subtotal)}`);
     lines.push(`🚚 Phí ship: ${shipping === 0 ? "Miễn phí" : formatVND(shipping)}`);
     lines.push(`💰 TỔNG CỘNG: ${formatVND(subtotal + shipping)}`);
+    lines.push(
+      `💳 Thanh toán: ${customer.payMethod === "transfer"
+        ? "Chuyển khoản ngân hàng"
+        : "Tiền mặt khi nhận (COD)"}`
+    );
     lines.push("━━━━━━━━━━━━━━━━━━━━");
     lines.push(`⏰ Đặt lúc: ${new Date().toLocaleString("vi-VN")}`);
     lines.push("");
@@ -789,13 +789,57 @@
     }
   }
 
+  // Tạo mã QR VietQR + thông tin chuyển khoản; ẩn nếu chọn COD
+  function setupTransferBox(customer) {
+    const box = $("#transferBox");
+    if (!box) return;
+    const bank = (typeof BANK_CONFIG !== "undefined") ? BANK_CONFIG : null;
+    if (customer.payMethod !== "transfer" || !bank || !bank.enabled) {
+      box.hidden = true;
+      return;
+    }
+    const subtotal = getCartTotal();
+    const shipping = subtotal >= SHOP_CONFIG.freeShipMin ? 0 : SHOP_CONFIG.shippingFee;
+    const amount = subtotal + shipping;
+    const content = `Com ${customer.name}`.trim();
+    const qrUrl =
+      `https://img.vietqr.io/image/${encodeURIComponent(bank.bankCode)}-` +
+      `${encodeURIComponent(bank.accountNumber)}-${bank.template || "compact2"}.png` +
+      `?amount=${encodeURIComponent(amount)}` +
+      `&addInfo=${encodeURIComponent(content)}` +
+      `&accountName=${encodeURIComponent(bank.accountName)}`;
+
+    $("#transferQr").src = qrUrl;
+    $("#transferQr").alt = `QR chuyển khoản ${formatVND(amount)}`;
+    $("#bankNameOut").textContent = bank.bankName;
+    $("#bankAccountOut").textContent = bank.accountNumber;
+    $("#bankHolderOut").textContent = bank.accountName;
+    $("#bankAmountOut").textContent = formatVND(amount);
+    $("#bankContentOut").textContent = content;
+    box.dataset.copy =
+      `Ngân hàng: ${bank.bankName}\n` +
+      `Số tài khoản: ${bank.accountNumber}\n` +
+      `Chủ tài khoản: ${bank.accountName}\n` +
+      `Số tiền: ${formatVND(amount)}\n` +
+      `Nội dung: ${content}`;
+    box.hidden = false;
+  }
+
+  async function handleCopyBank() {
+    const box = $("#transferBox");
+    const ok = await copyToClipboard((box && box.dataset.copy) || "");
+    toast(ok ? "✓ Đã sao chép thông tin chuyển khoản" : "⚠ Không sao chép được", ok ? "success" : "error");
+  }
+
   async function submitOrder(e) {
     e.preventDefault();
+    const payChecked = document.querySelector('input[name="payMethod"]:checked');
     const customer = {
       name:    $("#custName").value.trim(),
       phone:   $("#custPhone").value.trim(),
       address: $("#custAddress").value.trim(),
       note:    $("#custNote").value.trim(),
+      payMethod: payChecked ? payChecked.value : "cod",
       pinnedLocation,
     };
     if (!customer.name || !customer.phone || !customer.address) {
@@ -808,6 +852,9 @@
     // Fill order text into success modal
     $("#orderText").value = message;
     $("#openZaloBtn").href = `https://zalo.me/${SHOP_CONFIG.zaloPhone}`;
+
+    // Hiện/ẩn khối QR chuyển khoản theo hình thức thanh toán
+    setupTransferBox(customer);
 
     // Try to copy in background (silent — user can also press the button)
     copyToClipboard(message);
@@ -832,7 +879,7 @@
     clearCart();
     $("#checkoutForm").reset();
     pinnedLocation = null;
-    setLocationHint("Bấm để lấy vị trí hiện tại và chèn vào phần địa chỉ giao hàng.");
+    setLocationHint("Bấm để ghim vị trí hiện tại — toạ độ gửi kèm đơn, không ghi đè ô địa chỉ.");
   }
 
   async function handleCopy() {
@@ -941,6 +988,7 @@
       if (e.target === $("#successModal")) closeSuccess();
     });
     $("#copyBtn").addEventListener("click", handleCopy);
+    $("#copyBankBtn").addEventListener("click", handleCopyBank);
     $("#pinLocationBtn").addEventListener("click", handlePinLocation);
 
     // product image preview

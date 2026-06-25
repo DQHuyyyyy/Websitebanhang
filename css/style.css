@@ -1341,6 +1341,70 @@ input, textarea { font-family: inherit; font-size: inherit; }
 .summary-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
 /* ============================================================
+   THANH TOÁN (hình thức + QR chuyển khoản)
+   ============================================================ */
+.pay-methods { display: flex; flex-direction: column; gap: 10px; }
+.pay-method { display: block; cursor: pointer; }
+.pay-method input { position: absolute; opacity: 0; width: 0; height: 0; }
+.pay-method-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+.pay-method-icon { font-size: 26px; line-height: 1; }
+.pay-method-text strong { display: block; font-size: 14px; color: var(--text); }
+.pay-method-text small { color: var(--text-muted); font-size: 12px; }
+.pay-method input:checked + .pay-method-body {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.pay-method input:focus-visible + .pay-method-body { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.transfer-box {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.transfer-box h4 { margin: 0 0 12px; font-size: 16px; color: var(--text); }
+.transfer-qr { display: grid; place-items: center; margin-bottom: 12px; }
+.transfer-qr img {
+  width: 220px;
+  max-width: 80%;
+  height: auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+}
+.transfer-info {
+  text-align: left;
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+}
+.transfer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.transfer-row:last-child { border-bottom: none; }
+.transfer-row span { color: var(--text-muted); white-space: nowrap; }
+.transfer-row b { color: var(--text); text-align: right; word-break: break-word; }
+.transfer-note { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; line-height: 1.5; }
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 960px) {

@@ -27,6 +27,19 @@ const SHOP_CONFIG = {
   freeShipMin: 200000,
 };
 
+/* 💳 THÔNG TIN CHUYỂN KHOẢN (tạo mã QR VietQR tự điền số tiền)
+   - enabled: true = bật chuyển khoản; false = chỉ COD.
+   - bankCode: mã ngân hàng theo VietQR. MB Bank = "MB" (hoặc BIN "970422").
+     (Tra mã ngân hàng khác tại https://api.vietqr.io/v2/banks) */
+const BANK_CONFIG = {
+  enabled: true,
+  bankName: "MB Bank",            // tên hiển thị cho khách
+  bankCode: "MB",                 // mã VietQR
+  accountNumber: "0382597761",
+  accountName: "DUONG QUANG HUY", // IN HOA, không dấu
+  template: "compact2",           // kiểu QR: compact | compact2 | qr_only | print
+};
+
 const CATEGORIES = [
   { id: "all",      name: "Tất cả",                icon: "🛒" },
   { id: "com",      name: "Cơm bình dân",         icon: "🍚" },
