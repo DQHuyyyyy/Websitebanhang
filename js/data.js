@@ -137,6 +137,7 @@ const DAILY_DISHES = [
   { id: "r01", group: "rau",   name: "Rau muống xào tỏi",   img: "🥬", available: true },
   { id: "r02", group: "rau",   name: "Su su luộc",          img: "🥒", available: true },
   { id: "r03", group: "rau",   name: "Bắp cải luộc",        img: "🥗", available: true },
+  { id: "r04", group: "rau",   name: "Mướp Đắng Xào Trứng",        img: "images/Cơm/Rau/mướp_đắng.png", available: true },
   // ----- MÓN CANH -----
   { id: "s01", group: "canh",  name: "Canh chua",           img: "🍲", available: true },
   { id: "s02", group: "canh",  name: "Canh rau ngót",       img: "🥣", available: true },
