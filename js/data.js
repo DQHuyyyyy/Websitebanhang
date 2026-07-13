@@ -22,9 +22,9 @@ const SHOP_CONFIG = {
   },
   facebook: "https://facebook.com/taphoathuydiep",
   // Phí giao hàng mặc định (đ)
-  shippingFee: 15000,
+  shippingFee: 0,
   // Đơn tối thiểu miễn phí ship (đ)
-  freeShipMin: 200000,
+  freeShipMin: 0,
 };
 
 /* 💳 THÔNG TIN CHUYỂN KHOẢN (tạo mã QR VietQR tự điền số tiền)
