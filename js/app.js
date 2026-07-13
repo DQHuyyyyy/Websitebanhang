@@ -251,6 +251,14 @@
   }
 
   // -------- CƠM TỰ CHỌN (build-your-own set) --------
+  function getComSetPrice() {
+    return comSelection.chinh.length >= COM_SET.rule.chinh.max
+      ? COM_SET.price4up
+      : comSelection.chinh.length >= COM_SET.rule.chinh.min
+        ? COM_SET.price
+        : COM_SET.price;
+  }
+
   function comGroups() {
     const rule = COM_SET.rule;
     return [
@@ -260,8 +268,16 @@
     ];
   }
 
+  function isComMainValid() {
+    const count = comSelection.chinh.length;
+    const rule = COM_SET.rule.chinh;
+    return count >= rule.min && count <= rule.max;
+  }
+
   function isComComplete() {
-    return comGroups().every(g => comSelection[g.key].length === g.need);
+    return isComMainValid() &&
+      comSelection.rau.length === COM_SET.rule.rau &&
+      comSelection.canh.length === COM_SET.rule.canh;
   }
 
   function renderComBuilder() {
@@ -269,6 +285,7 @@
     if (!wrap) return;
     const groups = comGroups();
     const available = dishes.filter(d => d.available !== false);
+    const currentPrice = getComSetPrice();
 
     const groupsHtml = groups.map(g => {
       const dishes = available.filter(d => d.group === g.key);
@@ -287,12 +304,17 @@
           }).join("")
         : `<p class="dish-empty">Hôm nay tạm hết món nhóm này 😴</p>`;
 
-      const done = chosen.length === g.need;
+      const done = g.key === "chinh"
+        ? chosen.length >= g.need.min
+        : chosen.length === g.need;
+      const countLabel = g.key === "chinh"
+        ? `${chosen.length}/${g.need.min}-${g.need.max}`
+        : `${chosen.length}/${g.need}`;
       return `
         <div class="dish-group">
           <div class="dish-group-head">
             <h4>${g.icon} ${g.label}</h4>
-            <span class="dish-count ${done ? "done" : ""}">${chosen.length}/${g.need}</span>
+            <span class="dish-count ${done ? "done" : ""}">${countLabel}</span>
           </div>
           <div class="dish-list">${cards}</div>
         </div>`;
@@ -300,20 +322,21 @@
 
     const complete = isComComplete();
     const progress = groups
-      .map(g => `${g.label}: ${comSelection[g.key].length}/${g.need}`)
+      .map(g => `${g.label}: ${comSelection[g.key].length}/${g.key === "chinh" ? `${g.need.min}-${g.need.max}` : g.need}`)
       .join("  ·  ");
 
     wrap.innerHTML = `
       <div class="com-head">
-        <h3>🍱 Cơm tự chọn — ${formatVND(COM_SET.price)}/set</h3>
-        <p>Cơm trắng + ${COM_SET.rule.chinh} món chính + ${COM_SET.rule.rau} rau + ${COM_SET.rule.canh} canh.
-           Chọn món tươi hôm nay theo ý bạn nhé!</p>
+        <h3>🍱 Cơm tự chọn — ${formatVND(currentPrice)}/set</h3>
+        <p>Cơm trắng + ${COM_SET.rule.chinh.min}-${COM_SET.rule.chinh.max} món chính + ${COM_SET.rule.rau} rau + ${COM_SET.rule.canh} canh.<br/>
+           <small>Chọn 2-3 món chính giá ${formatVND(COM_SET.price)}, 4-5 món giá ${formatVND(COM_SET.price4up)}.</small>
+        </p>
       </div>
       ${groupsHtml}
       <div class="com-bar">
         <div class="com-bar-info">
           <span class="com-bar-progress">${progress}</span>
-          <span class="com-bar-price">${formatVND(COM_SET.price)}</span>
+          <span class="com-bar-price">${formatVND(currentPrice)}</span>
         </div>
         <button class="btn btn-primary" id="addComSet" ${complete ? "" : "disabled"}>
           ${complete ? "➕ Thêm set vào giỏ" : "Chọn đủ món để thêm"}
@@ -335,11 +358,17 @@
       arr.splice(idx, 1);              // bỏ chọn
     } else if (need === 1) {
       comSelection[group] = [dishId];  // nhóm chỉ 1 món -> thay thế
-    } else if (arr.length < need) {
-      arr.push(dishId);                // còn chỗ -> thêm
     } else {
-      toast(`Chỉ chọn ${need} món ở nhóm này. Bỏ bớt 1 món để đổi nhé!`, "error");
-      return;
+      const max = group === "chinh" ? need.max : need;
+      if (arr.length < max) {
+        if (group === "chinh" && arr.length === COM_SET.rule.chinh.min + 1) {
+          toast("Quý khách chọn sang món thứ 4 sẽ tính giá 40k/suất", "info");
+        }
+        arr.push(dishId);                // còn chỗ -> thêm
+      } else {
+        toast(`Chỉ chọn tối đa ${max} món ở nhóm này. Bỏ bớt 1 món để đổi nhé!`, "error");
+        return;
+      }
     }
     renderComBuilder();
   }
@@ -361,7 +390,7 @@
       custom: true,
       qty: 1,
       name: "Set cơm tự chọn",
-      price: COM_SET.price,
+      price: getComSetPrice(),
       icon: "🍱",
       lines,
     });

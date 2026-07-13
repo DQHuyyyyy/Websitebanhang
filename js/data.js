@@ -114,8 +114,9 @@ const PRODUCTS = [
    ============================================================ */
 const COM_SET = {
   price: 35000,
-  // 1 set = cơm trắng + 3 món chính + 1 rau + 1 canh
-  rule: { chinh: 3, rau: 1, canh: 1 },
+  price4up: 40000,
+  // 1 set = cơm trắng + 2-5 món chính + 1 rau + 1 canh
+  rule: { chinh: { min: 2, max: 5 }, rau: 1, canh: 1 },
 };
 
 /* ⚙️ GOOGLE SHEET — để bếp cập nhật món mỗi ngày (xem HUONG_DAN_THUC_DON.md)
