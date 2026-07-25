@@ -27,19 +27,6 @@ const SHOP_CONFIG = {
   freeShipMin: 0,
 };
 
-/* 💳 THÔNG TIN CHUYỂN KHOẢN (tạo mã QR VietQR tự điền số tiền)
-   - enabled: true = bật chuyển khoản; false = chỉ COD.
-   - bankCode: mã ngân hàng theo VietQR. MB Bank = "MB" (hoặc BIN "970422").
-     (Tra mã ngân hàng khác tại https://api.vietqr.io/v2/banks) */
-const BANK_CONFIG = {
-  enabled: true,
-  bankName: "MB Bank",            // tên hiển thị cho khách
-  bankCode: "MB",                 // mã VietQR
-  accountNumber: "0382597761",
-  accountName: "DUONG QUANG HUY", // IN HOA, không dấu
-  template: "compact2",           // kiểu QR: compact | compact2 | qr_only | print
-};
-
 const CATEGORIES = [
   { id: "all",      name: "Tất cả",                icon: "🛒" },
   { id: "com",      name: "Cơm bình dân",         icon: "🍚" },
@@ -113,10 +100,14 @@ const PRODUCTS = [
    - available : true = còn món hôm nay, false = tạm hết.
    ============================================================ */
 const COM_SET = {
-  price: 35000,
-  price4up: 40000,
-  // 1 set = cơm trắng + 2-5 món chính + 1 rau + 1 canh
-  rule: { chinh: { min: 2, max: 5 }, rau: 1, canh: 1 },
+  price: 35000,        // giá gốc: tới "baseUpTo" món chính
+  baseUpTo: 3,         // từ 2 tới 3 món chính vẫn 35k
+  stepPrice: 5000,     // từ món chính thứ 4 trở đi, mỗi món +5k
+  // => 3 món = 35k · 4 món = 40k · 5 món = 45k · 6 món = 50k ... (không giới hạn)
+  // 1 set = cơm trắng + từ 2 món chính + rau (tuỳ chọn) + canh (tuỳ chọn)
+  // chinh.max = null => khách chọn bao nhiêu món chính cũng được
+  rule: { chinh: { min: 2, max: null }, rau: 1, canh: 1 },
+  optional: { rau: true, canh: true },  // rau/canh không bắt buộc
 };
 
 /* ⚙️ GOOGLE SHEET — để bếp cập nhật món mỗi ngày (xem HUONG_DAN_THUC_DON.md)

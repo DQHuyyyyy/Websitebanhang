@@ -251,12 +251,18 @@
   }
 
   // -------- CƠM TỰ CHỌN (build-your-own set) --------
-  function getComSetPrice() {
-    return comSelection.chinh.length >= COM_SET.rule.chinh.max
-      ? COM_SET.price4up
-      : comSelection.chinh.length >= COM_SET.rule.chinh.min
-        ? COM_SET.price
-        : COM_SET.price;
+  // Giá set theo số món chính: tới baseUpTo món = giá gốc,
+  // từ món kế tiếp mỗi món cộng thêm stepPrice. VD 3 món 35k · 4 món 40k · 5 món 45k.
+  function getComSetPrice(count) {
+    const n = count == null ? comSelection.chinh.length : count;
+    const base = COM_SET.baseUpTo || COM_SET.rule.chinh.min;
+    const step = COM_SET.stepPrice || 0;
+    return COM_SET.price + Math.max(0, n - base) * step;
+  }
+
+  // Rau / canh là nhóm tuỳ chọn — chọn hay không đều thêm được vào giỏ
+  function isComGroupOptional(key) {
+    return !!(COM_SET.optional && COM_SET.optional[key]);
   }
 
   function comGroups() {
@@ -268,16 +274,23 @@
     ];
   }
 
-  function isComMainValid() {
-    const count = comSelection.chinh.length;
-    const rule = COM_SET.rule.chinh;
-    return count >= rule.min && count <= rule.max;
+  // max = null/0 => không giới hạn số món chính
+  function comMainMax() {
+    return COM_SET.rule.chinh.max || Infinity;
   }
 
+  function isComMainValid() {
+    const count = comSelection.chinh.length;
+    return count >= COM_SET.rule.chinh.min && count <= comMainMax();
+  }
+
+  // Chỉ MÓN CHÍNH là bắt buộc. Nhóm tuỳ chọn (rau/canh) chỉ cần không vượt quá số lượng cho phép.
   function isComComplete() {
-    return isComMainValid() &&
-      comSelection.rau.length === COM_SET.rule.rau &&
-      comSelection.canh.length === COM_SET.rule.canh;
+    if (!isComMainValid()) return false;
+    return ["rau", "canh"].every(key => {
+      const n = comSelection[key].length;
+      return isComGroupOptional(key) ? n <= COM_SET.rule[key] : n === COM_SET.rule[key];
+    });
   }
 
   function renderComBuilder() {
@@ -304,12 +317,15 @@
           }).join("")
         : `<p class="dish-empty">Hôm nay tạm hết món nhóm này 😴</p>`;
 
+      const optional = isComGroupOptional(g.key);
       const done = g.key === "chinh"
         ? chosen.length >= g.need.min
-        : chosen.length === g.need;
+        : optional || chosen.length === g.need;   // nhóm tuỳ chọn luôn coi như xong
       const countLabel = g.key === "chinh"
-        ? `${chosen.length}/${g.need.min}-${g.need.max}`
-        : `${chosen.length}/${g.need}`;
+        ? `${chosen.length}`               // không giới hạn -> chỉ đếm số món đã chọn
+        : optional
+          ? `${chosen.length}/${g.need} · tuỳ chọn`
+          : `${chosen.length}/${g.need}`;
       return `
         <div class="dish-group">
           <div class="dish-group-head">
@@ -322,14 +338,27 @@
 
     const complete = isComComplete();
     const progress = groups
-      .map(g => `${g.label}: ${comSelection[g.key].length}/${g.key === "chinh" ? `${g.need.min}-${g.need.max}` : g.need}`)
+      .map(g => {
+        const n = comSelection[g.key].length;
+        if (g.key === "chinh") return `${g.label}: ${n}/${g.need.min}${g.need.max ? `-${g.need.max}` : "+"}`;
+        return `${g.label}: ${n}${isComGroupOptional(g.key) ? " (tuỳ chọn)" : `/${g.need}`}`;
+      })
       .join("  ·  ");
+
+    // Bảng giá theo số món chính: "3 món 35.000đ · 4 món 40.000đ · 5 món 45.000đ ..."
+    const base = COM_SET.baseUpTo || COM_SET.rule.chinh.min;
+    const ladderEnd = COM_SET.rule.chinh.max || base + 2;   // không giới hạn -> chỉ nêu vài mốc đầu
+    const priceLadder = [];
+    for (let n = base; n <= ladderEnd; n++) {
+      priceLadder.push(`${n} món ${formatVND(getComSetPrice(n))}`);
+    }
+    if (!COM_SET.rule.chinh.max) priceLadder.push("…");
 
     wrap.innerHTML = `
       <div class="com-head">
         <h3>🍱 Cơm tự chọn — ${formatVND(currentPrice)}/set</h3>
-        <p>Cơm trắng + ${COM_SET.rule.chinh.min}-${COM_SET.rule.chinh.max} món chính + ${COM_SET.rule.rau} rau + ${COM_SET.rule.canh} canh.<br/>
-           <small>Chọn 2-3 món chính giá ${formatVND(COM_SET.price)}, 4-5 món giá ${formatVND(COM_SET.price4up)}.</small>
+        <p>Cơm trắng + ${COM_SET.rule.chinh.max ? `${COM_SET.rule.chinh.min}-${COM_SET.rule.chinh.max}` : `từ ${COM_SET.rule.chinh.min}`} món chính + rau, canh (tuỳ chọn).<br/>
+           <small>Giá theo món chính: ${priceLadder.join(" · ")}. Từ món thứ ${base + 1} mỗi món thêm +${formatVND(COM_SET.stepPrice || 0)}.</small>
         </p>
       </div>
       ${groupsHtml}
@@ -339,7 +368,7 @@
           <span class="com-bar-price">${formatVND(currentPrice)}</span>
         </div>
         <button class="btn btn-primary" id="addComSet" ${complete ? "" : "disabled"}>
-          ${complete ? "➕ Thêm set vào giỏ" : "Chọn đủ món để thêm"}
+          ${complete ? "➕ Thêm set vào giỏ" : `Chọn ít nhất ${COM_SET.rule.chinh.min} món chính`}
         </button>
       </div>`;
 
@@ -359,10 +388,13 @@
     } else if (need === 1) {
       comSelection[group] = [dishId];  // nhóm chỉ 1 món -> thay thế
     } else {
-      const max = group === "chinh" ? need.max : need;
+      const max = group === "chinh" ? comMainMax() : need;
       if (arr.length < max) {
-        if (group === "chinh" && arr.length === COM_SET.rule.chinh.min + 1) {
-          toast("Quý khách chọn sang món thứ 4 sẽ tính giá 40k/suất", "info");
+        // Mỗi món chính vượt mức giá gốc -> báo giá mới cho khách biết trước
+        const base = COM_SET.baseUpTo || COM_SET.rule.chinh.min;
+        const next = arr.length + 1;
+        if (group === "chinh" && next > base) {
+          toast(`Món chính thứ ${next} → set tính ${formatVND(getComSetPrice(next))}/suất (+${formatVND(COM_SET.stepPrice || 0)})`, "info");
         }
         arr.push(dishId);                // còn chỗ -> thêm
       } else {
@@ -786,15 +818,11 @@
     lines.push(`💵 Tạm tính: ${formatVND(subtotal)}`);
     lines.push(`🚚 Phí ship: ${shipping === 0 ? "Miễn phí" : formatVND(shipping)}`);
     lines.push(`💰 TỔNG CỘNG: ${formatVND(subtotal + shipping)}`);
-    lines.push(
-      `💳 Thanh toán: ${customer.payMethod === "transfer"
-        ? "Chuyển khoản ngân hàng"
-        : "Tiền mặt khi nhận (COD)"}`
-    );
+    lines.push("💳 Thanh toán khi nhận hàng ");
     lines.push("━━━━━━━━━━━━━━━━━━━━");
     lines.push(`⏰ Đặt lúc: ${new Date().toLocaleString("vi-VN")}`);
     lines.push("");
-    lines.push("Vui lòng xác nhận đơn hàng giúp em. Cảm ơn shop!");
+    lines.push("Cảm ơn Quý Khách !");
     return lines.join("\n");
   }
 
@@ -818,57 +846,13 @@
     }
   }
 
-  // Tạo mã QR VietQR + thông tin chuyển khoản; ẩn nếu chọn COD
-  function setupTransferBox(customer) {
-    const box = $("#transferBox");
-    if (!box) return;
-    const bank = (typeof BANK_CONFIG !== "undefined") ? BANK_CONFIG : null;
-    if (customer.payMethod !== "transfer" || !bank || !bank.enabled) {
-      box.hidden = true;
-      return;
-    }
-    const subtotal = getCartTotal();
-    const shipping = subtotal >= SHOP_CONFIG.freeShipMin ? 0 : SHOP_CONFIG.shippingFee;
-    const amount = subtotal + shipping;
-    const content = `Com ${customer.name}`.trim();
-    const qrUrl =
-      `https://img.vietqr.io/image/${encodeURIComponent(bank.bankCode)}-` +
-      `${encodeURIComponent(bank.accountNumber)}-${bank.template || "compact2"}.png` +
-      `?amount=${encodeURIComponent(amount)}` +
-      `&addInfo=${encodeURIComponent(content)}` +
-      `&accountName=${encodeURIComponent(bank.accountName)}`;
-
-    $("#transferQr").src = qrUrl;
-    $("#transferQr").alt = `QR chuyển khoản ${formatVND(amount)}`;
-    $("#bankNameOut").textContent = bank.bankName;
-    $("#bankAccountOut").textContent = bank.accountNumber;
-    $("#bankHolderOut").textContent = bank.accountName;
-    $("#bankAmountOut").textContent = formatVND(amount);
-    $("#bankContentOut").textContent = content;
-    box.dataset.copy =
-      `Ngân hàng: ${bank.bankName}\n` +
-      `Số tài khoản: ${bank.accountNumber}\n` +
-      `Chủ tài khoản: ${bank.accountName}\n` +
-      `Số tiền: ${formatVND(amount)}\n` +
-      `Nội dung: ${content}`;
-    box.hidden = false;
-  }
-
-  async function handleCopyBank() {
-    const box = $("#transferBox");
-    const ok = await copyToClipboard((box && box.dataset.copy) || "");
-    toast(ok ? "✓ Đã sao chép thông tin chuyển khoản" : "⚠ Không sao chép được", ok ? "success" : "error");
-  }
-
   async function submitOrder(e) {
     e.preventDefault();
-    const payChecked = document.querySelector('input[name="payMethod"]:checked');
     const customer = {
       name:    $("#custName").value.trim(),
       phone:   $("#custPhone").value.trim(),
       address: $("#custAddress").value.trim(),
       note:    $("#custNote").value.trim(),
-      payMethod: payChecked ? payChecked.value : "cod",
       pinnedLocation,
     };
     if (!customer.name || !customer.phone || !customer.address) {
@@ -881,9 +865,6 @@
     // Fill order text into success modal
     $("#orderText").value = message;
     $("#openZaloBtn").href = `https://zalo.me/${SHOP_CONFIG.zaloPhone}`;
-
-    // Hiện/ẩn khối QR chuyển khoản theo hình thức thanh toán
-    setupTransferBox(customer);
 
     // Try to copy in background (silent — user can also press the button)
     copyToClipboard(message);
@@ -1017,7 +998,6 @@
       if (e.target === $("#successModal")) closeSuccess();
     });
     $("#copyBtn").addEventListener("click", handleCopy);
-    $("#copyBankBtn").addEventListener("click", handleCopyBank);
     $("#pinLocationBtn").addEventListener("click", handlePinLocation);
 
     // product image preview
