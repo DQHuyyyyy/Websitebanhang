@@ -82,20 +82,18 @@
     return p ? { name: p.name, price: p.price, icon: p.icon, desc: p.desc } : null;
   }
 
-  function saveCart() {
-    try {
-      localStorage.setItem("thuydiep_cart", JSON.stringify(cart));
-    } catch (e) { /* ignore */ }
-  }
+  // -------- GIỎ HÀNG: KHÔNG lưu trữ, mỗi lần vào web là giỏ trống --------
+  // Giỏ chỉ nằm trong bộ nhớ của trang: tải lại trang / mở lại web là làm mới hoàn toàn.
+  const CART_KEY = "thuydiep_cart";
+
+  // Cố ý để trống: giữ hàm để các nơi gọi không phải sửa, nhưng không ghi ra bộ nhớ máy khách.
+  function saveCart() { /* không lưu — xem loadCart() */ }
+
   function loadCart() {
-    try {
-      const raw = localStorage.getItem("thuydiep_cart");
-      const saved = raw ? JSON.parse(raw) : [];
-      // Bỏ các món không còn hợp lệ (vd set cơm cố định cũ đã gỡ)
-      return Array.isArray(saved)
-        ? saved.filter(item => item && (item.custom || PRODUCTS.some(p => p.id === item.id)))
-        : [];
-    } catch { return []; }
+    // Dọn giỏ hàng do các bản trước đã lưu lại trên máy khách
+    try { localStorage.removeItem(CART_KEY); } catch (e) { /* ignore */ }
+    try { sessionStorage.removeItem(CART_KEY); } catch (e) { /* ignore */ }
+    return [];
   }
 
   // -------- TOAST --------
